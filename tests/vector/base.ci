@@ -7,5 +7,6 @@ mainmodule base
         entry Main(CkArgMsg*);
     
         entry [threaded] void benchmark();
+        entry [threaded] void check_kokkos();
     };
 }

@@ -246,6 +246,7 @@ private:
         for (auto const& ast : instr_list)
             execute_instruction(ast);
     }
+public:
 
     void execute_instruction(
         std::vector<ct::vec_impl::vec_node> const& instruction,
@@ -309,8 +310,11 @@ private:
             if (node_id == vec_map.size())
                 vec_map.emplace_back(Kokkos::View<double*>("FIXME", vec_map[copy_id].size()));
 
+            Kokkos::View<double*> copy_view = vec_map[copy_id];
+            Kokkos::View<double*> res_view = vec_map[node_id];
+
             Kokkos::parallel_for("copy_" + std::to_string(copy_id) + "_" + std::to_string(node_id), vec_map[node_id].size(), KOKKOS_LAMBDA(int i) {
-                vec_map[node_id](i) = vec_map[copy_id](i);
+                res_view(i) = copy_view(i);
             });
         } return;
         case ct::util::Operation::add:
@@ -330,6 +334,7 @@ private:
         case ct::util::Operation::binary_expr:
         case ct::util::Operation::where:
 
+        { 
             if (node_id == vec_map.size())
             {
                 vec_dim = get_vec_dim(node.vec_len_);
@@ -338,9 +343,12 @@ private:
                 vec_map.emplace_back(vec);
             }
 
+            Kokkos::View<double*> res_view = vec_map[node_id];
+
             Kokkos::parallel_for("binop_" + std::to_string(node_id), vec_map[node_id].size(), KOKKOS_LAMBDA(int i) {
-                vec_map[node_id](i) = execute_ast_for_idx(instruction, 0, i);
+                res_view(i) = execute_ast_for_idx(instruction, 0, i);
             });
+        }
 
             return;
         case ct::util::Operation::inplace_add: {

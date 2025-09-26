@@ -46,3 +46,6 @@ charmrun
 
 # vscode
 .vscode
+
+build
+*.sh

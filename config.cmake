@@ -1,8 +1,9 @@
-set(CHARM_DIR "/home/shogo/master/Kale/charm/netlrts-linux-x86_64")
-set(BASE_DIR "/home/shogo/master/Kale/charmTylesUpstream/LibCharmtyles")
-set(EIGEN_DIR "/usr/include/eigen3")
+set(CHARM_DIR "/u/ajain18/charm/netlrts-linux-x86_64-cuda")
+set(BASE_DIR "/u/ajain18/LibCharmtyles")
+set(EIGEN_DIR "/sw/spack/deltas11-2023-03/apps/linux-rhel8-zen3/gcc-11.4.0/eigen-3.4.0-vqm46bt")
 
 set(CHARMC "${CHARM_DIR}/bin/charmc")
-set(OPTS "-c++-option -std=c++17 -O3 -march=native -DNDEBUG")
+set(OPTS "-std=c++17 -O3 -march=native -DNDEBUG")
 set(LD_OPTS "")
 set(INCS "-I${BASE_DIR}")
+
