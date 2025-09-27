@@ -11,6 +11,8 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(Kokkos)
 
 message(STATUS "CHARMC = ${CHARMC}")
+
+set(CMAKE_CXX_COMPILER "${CHARMC}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OPTS} ${LD_OPTS}")
 
 add_custom_command(
