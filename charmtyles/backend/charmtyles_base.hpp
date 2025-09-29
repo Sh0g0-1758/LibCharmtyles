@@ -332,25 +332,19 @@ public:
         case ct::util::Operation::logical_not:
         case ct::util::Operation::unary_expr:
         case ct::util::Operation::binary_expr:
-        case ct::util::Operation::where:
-
-        { 
+        case ct::util::Operation::where: {
             if (node_id == vec_map.size())
             {
                 vec_dim = get_vec_dim(node.vec_len_);
-
+    
                 Kokkos::View<double*> vec("vec" + std::to_string(node_id), vec_dim);
                 vec_map.emplace_back(vec);
             }
-
-            Kokkos::View<double*> res_view = vec_map[node_id];
-
+    
             Kokkos::parallel_for("binop_" + std::to_string(node_id), vec_map[node_id].size(), KOKKOS_LAMBDA(int i) {
                 res_view(i) = execute_ast_for_idx(instruction, 0, i);
             });
-        }
-
-            return;
+        } return;
         case ct::util::Operation::inplace_add: {
             copy_id = node.copy_id_;
             if (node_id == vec_map.size())
