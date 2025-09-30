@@ -142,8 +142,7 @@ namespace ct {
         {
             std::size_t name_ = -1;
             ct::util::Operation operation_;
-            std::shared_ptr<ct::unary_operator> unary_expr_ =
-                std::make_shared<ct::unary_operator>();
+            std::shared_ptr<ct::unary_op_wrapper> unary_expr_ = std::make_shared<ct::unary_op_wrapper>();
             std::shared_ptr<ct::binary_operator> binary_expr_ =
                 std::make_shared<ct::binary_operator>();
             std::shared_ptr<ct::custom_operator> custom_expr_ =
@@ -177,7 +176,7 @@ namespace ct {
             }
 
             explicit vec_node(std::size_t name, ct::util::Operation op,
-                std::shared_ptr<ct::unary_operator> unary_expr,
+                std::shared_ptr<ct::unary_op_wrapper> unary_expr,
                 std::size_t vec_len)
               : name_(name)
               , operation_(op)

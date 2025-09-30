@@ -17,8 +17,6 @@
 
 namespace ct {
 
-    CProxy_KokkosGroup kokkosMgmt;
-
     void init()
     {
         scalar_impl_proxy = CProxy_scalar_impl::ckNew();

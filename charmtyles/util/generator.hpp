@@ -3,6 +3,7 @@
 #include "charm++.h"
 #include "matrix_view.hpp"
 #include <vector>
+#include <Kokkos_Core.hpp>
 
 namespace ct {
 
@@ -133,32 +134,33 @@ namespace ct {
         std::vector<std::vector<double>> data_;
     };
 
-    class unary_operator : public PUP::able
+    class unary_operator
     {
     public:
-        PUPable_decl(unary_operator);
+        // PUPable_decl(unary_operator);
 
-        unary_operator() = default;
-        virtual ~unary_operator() = default;
+        KOKKOS_FUNCTION unary_operator(){};
+        KOKKOS_FUNCTION virtual ~unary_operator(){};
 
         unary_operator(CkMigrateMessage* m)
-          : PUP::able(m)
         {
         }
 
+        //these will be removed, here because not all operations have been changed and they require these to overload
         virtual void pup(PUP::er& p)
         {
-            PUP::able::pup(p);
+            // PUP::able::pup(p);
+            //passthrough
         }
 
         // Default Operator overload for vectors
-        virtual double operator()(std::size_t index, double value)
+        KOKKOS_FUNCTION virtual double operator()(std::size_t index, double value)
         {
             return -1.0;
         }
 
         // Default Operator overload for matrices
-        virtual double operator()(
+        KOKKOS_FUNCTION virtual double operator()(
             std::size_t row_id, std::size_t col_id, double value)
         {
             return -1.0;
@@ -224,6 +226,25 @@ namespace ct {
             ct::util::matrix_view& lhs, ct::util::matrix_view& rhs)
         {
             lhs = rhs;
+        }
+    };
+
+    class unary_op_wrapper: public PUP::able{
+        public:
+        PUPable_decl(unary_op_wrapper);
+        ct::unary_operator* unop_ptr;
+        void* deviceInstanceMemory;
+
+        unary_op_wrapper()=default;
+        virtual ~unary_op_wrapper()=default;
+        
+        virtual void pup(PUP::er& p){
+            PUP::able::pup(p);
+        }
+
+        unary_op_wrapper(CkMigrateMessage* m)
+          : PUP::able(m)
+        {
         }
     };
 

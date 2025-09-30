@@ -282,7 +282,7 @@ namespace ct {
 
             explicit vec_expression(LHS const& lhs_, std::size_t vec_len_,
                 ct::util::Operation op_,
-                std::shared_ptr<unary_operator> unary_op_)
+                std::shared_ptr<ct::unary_op_wrapper> unary_op_)
               : lhs(lhs_)
               , rhs(lhs_)
               , vec_len(vec_len_)
@@ -427,7 +427,7 @@ namespace ct {
             bool is_rhs_scalar = false;
             std::size_t vec_len;
             std::shared_ptr<binary_operator> binary_op;
-            std::shared_ptr<unary_operator> unary_op;
+            std::shared_ptr<ct::unary_op_wrapper> unary_op;
             std::shared_ptr<custom_operator> custom_op;
             ct::util::Operation op;
         };

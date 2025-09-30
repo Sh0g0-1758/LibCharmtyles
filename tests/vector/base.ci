@@ -1,6 +1,8 @@
 mainmodule base
 {
     extern module libcharmtyles;
+    PUPable ct::unary_op_wrapper;
+    PUPable ct::negate_op_wrapper;
 
     mainchare Main
     {

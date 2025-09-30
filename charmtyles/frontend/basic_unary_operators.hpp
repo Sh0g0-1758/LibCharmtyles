@@ -8,30 +8,20 @@ namespace ct {
     class negate_op : public ct::unary_operator
     {
     public:
-        negate_op() = default;
-        ~negate_op() = default;
+        KOKKOS_FUNCTION negate_op(){};
+        KOKKOS_FUNCTION ~negate_op(){};
 
         using ct::unary_operator::unary_operator;
 
-        virtual double operator()(std::size_t index, double value) final
+        KOKKOS_FUNCTION virtual double operator()(std::size_t index, double value) 
         {
             return -value;
         }
 
-        virtual double operator()(
-            std::size_t i, std::size_t j, double value) final
+        KOKKOS_FUNCTION virtual double operator()(
+            std::size_t i, std::size_t j, double value) 
         {
             return -value;
-        }
-
-        PUPable_decl(negate_op);
-        negate_op(CkMigrateMessage* m)
-          : ct::unary_operator(m)
-        {
-        }
-        void pup(PUP::er& p) final
-        {
-            ct::unary_operator::pup(p);
         }
     };
 
@@ -43,23 +33,23 @@ namespace ct {
 
         using ct::unary_operator::unary_operator;
 
-        virtual double operator()(std::size_t index, double value) final
+        KOKKOS_FUNCTION virtual double operator()(std::size_t index, double value) 
         {
             return std::abs(value);
         }
 
-        virtual double operator()(
-            std::size_t i, std::size_t j, double value) final
+        KOKKOS_FUNCTION virtual double operator()(
+            std::size_t i, std::size_t j, double value) 
         {
             return std::abs(value);
         }
 
-        PUPable_decl(abs_op);
+        
         abs_op(CkMigrateMessage* m)
           : ct::unary_operator(m)
         {
         }
-        void pup(PUP::er& p) final
+        void pup(PUP::er& p) 
         {
             ct::unary_operator::pup(p);
         }
@@ -73,23 +63,23 @@ namespace ct {
 
         using ct::unary_operator::unary_operator;
 
-        virtual double operator()(std::size_t index, double value) final
+        KOKKOS_FUNCTION virtual double operator()(std::size_t index, double value) 
         {
             return value * value;
         }
 
-        virtual double operator()(
-            std::size_t i, std::size_t j, double value) final
+        KOKKOS_FUNCTION virtual double operator()(
+            std::size_t i, std::size_t j, double value) 
         {
             return value * value;
         }
 
-        PUPable_decl(square_op);
+        
         square_op(CkMigrateMessage* m)
           : ct::unary_operator(m)
         {
         }
-        void pup(PUP::er& p) final
+        void pup(PUP::er& p) 
         {
             ct::unary_operator::pup(p);
         }
@@ -103,23 +93,23 @@ namespace ct {
 
         using ct::unary_operator::unary_operator;
 
-        virtual double operator()(std::size_t index, double value) final
+        KOKKOS_FUNCTION virtual double operator()(std::size_t index, double value) 
         {
             return std::sqrt(value);
         }
 
-        virtual double operator()(
-            std::size_t i, std::size_t j, double value) final
+        KOKKOS_FUNCTION virtual double operator()(
+            std::size_t i, std::size_t j, double value) 
         {
             return std::sqrt(value);
         }
 
-        PUPable_decl(sqrt_op);
+        
         sqrt_op(CkMigrateMessage* m)
           : ct::unary_operator(m)
         {
         }
-        void pup(PUP::er& p) final
+        void pup(PUP::er& p) 
         {
             ct::unary_operator::pup(p);
         }
@@ -133,23 +123,23 @@ namespace ct {
 
         using ct::unary_operator::unary_operator;
 
-        virtual double operator()(std::size_t index, double value) final
+        KOKKOS_FUNCTION virtual double operator()(std::size_t index, double value) 
         {
             return 1.0 / value;
         }
 
-        virtual double operator()(
-            std::size_t i, std::size_t j, double value) final
+        KOKKOS_FUNCTION virtual double operator()(
+            std::size_t i, std::size_t j, double value) 
         {
             return 1.0 / value;
         }
 
-        PUPable_decl(reciprocal_op);
+        
         reciprocal_op(CkMigrateMessage* m)
           : ct::unary_operator(m)
         {
         }
-        void pup(PUP::er& p) final
+        void pup(PUP::er& p) 
         {
             ct::unary_operator::pup(p);
         }
@@ -163,23 +153,23 @@ namespace ct {
 
         using ct::unary_operator::unary_operator;
 
-        virtual double operator()(std::size_t index, double value) final
+        KOKKOS_FUNCTION virtual double operator()(std::size_t index, double value) 
         {
             return std::sin(value);
         }
 
-        virtual double operator()(
-            std::size_t i, std::size_t j, double value) final
+        KOKKOS_FUNCTION virtual double operator()(
+            std::size_t i, std::size_t j, double value) 
         {
             return std::sin(value);
         }
 
-        PUPable_decl(sin_op);
+        
         sin_op(CkMigrateMessage* m)
           : ct::unary_operator(m)
         {
         }
-        void pup(PUP::er& p) final
+        void pup(PUP::er& p) 
         {
             ct::unary_operator::pup(p);
         }
@@ -193,23 +183,23 @@ namespace ct {
 
         using ct::unary_operator::unary_operator;
 
-        virtual double operator()(std::size_t index, double value) final
+        KOKKOS_FUNCTION virtual double operator()(std::size_t index, double value) 
         {
             return std::cos(value);
         }
 
-        virtual double operator()(
-            std::size_t i, std::size_t j, double value) final
+        KOKKOS_FUNCTION virtual double operator()(
+            std::size_t i, std::size_t j, double value) 
         {
             return std::cos(value);
         }
 
-        PUPable_decl(cos_op);
+        
         cos_op(CkMigrateMessage* m)
           : ct::unary_operator(m)
         {
         }
-        void pup(PUP::er& p) final
+        void pup(PUP::er& p) 
         {
             ct::unary_operator::pup(p);
         }
@@ -223,23 +213,23 @@ namespace ct {
 
         using ct::unary_operator::unary_operator;
 
-        virtual double operator()(std::size_t index, double value) final
+        KOKKOS_FUNCTION virtual double operator()(std::size_t index, double value) 
         {
             return std::log(value);
         }
 
-        virtual double operator()(
-            std::size_t i, std::size_t j, double value) final
+        KOKKOS_FUNCTION virtual double operator()(
+            std::size_t i, std::size_t j, double value) 
         {
             return std::log(value);
         }
 
-        PUPable_decl(log_op);
+        
         log_op(CkMigrateMessage* m)
           : ct::unary_operator(m)
         {
         }
-        void pup(PUP::er& p) final
+        void pup(PUP::er& p) 
         {
             ct::unary_operator::pup(p);
         }
@@ -253,23 +243,23 @@ namespace ct {
 
         using ct::unary_operator::unary_operator;
 
-        virtual double operator()(std::size_t index, double value) final
+        KOKKOS_FUNCTION virtual double operator()(std::size_t index, double value) 
         {
             return std::exp(value);
         }
 
-        virtual double operator()(
-            std::size_t i, std::size_t j, double value) final
+        KOKKOS_FUNCTION virtual double operator()(
+            std::size_t i, std::size_t j, double value) 
         {
             return std::exp(value);
         }
 
-        PUPable_decl(exp_op);
+        
         exp_op(CkMigrateMessage* m)
           : ct::unary_operator(m)
         {
         }
-        void pup(PUP::er& p) final
+        void pup(PUP::er& p) 
         {
             ct::unary_operator::pup(p);
         }
@@ -287,24 +277,24 @@ namespace ct {
 
         using ct::unary_operator::unary_operator;
 
-        virtual double operator()(std::size_t index, double value) final
+        KOKKOS_FUNCTION virtual double operator()(std::size_t index, double value) 
         {
             return scale_factor_ * value;
         }
 
-        virtual double operator()(
-            std::size_t i, std::size_t j, double value) final
+        KOKKOS_FUNCTION virtual double operator()(
+            std::size_t i, std::size_t j, double value) 
         {
             return scale_factor_ * value;
         }
 
-        PUPable_decl(scale_op);
+        
         scale_op(CkMigrateMessage* m)
           : ct::unary_operator(m)
         {
         }
 
-        void pup(PUP::er& p) final
+        void pup(PUP::er& p) 
         {
             ct::unary_operator::pup(p);
             p | scale_factor_;
@@ -326,24 +316,24 @@ namespace ct {
 
         using ct::unary_operator::unary_operator;
 
-        virtual double operator()(std::size_t index, double value) final
+        KOKKOS_FUNCTION virtual double operator()(std::size_t index, double value) 
         {
             return value + constant_;
         }
 
-        virtual double operator()(
-            std::size_t i, std::size_t j, double value) final
+        KOKKOS_FUNCTION virtual double operator()(
+            std::size_t i, std::size_t j, double value) 
         {
             return value + constant_;
         }
 
-        PUPable_decl(add_constant_op);
+        
         add_constant_op(CkMigrateMessage* m)
           : ct::unary_operator(m)
         {
         }
 
-        void pup(PUP::er& p) final
+        void pup(PUP::er& p) 
         {
             ct::unary_operator::pup(p);
             p | constant_;
@@ -361,34 +351,116 @@ namespace ct {
 
         using ct::unary_operator::unary_operator;
 
-        virtual double operator()(std::size_t index, double value) final
+        KOKKOS_FUNCTION virtual double operator()(std::size_t index, double value) 
         {
             return std::max(0.0, value);
         }
 
-        virtual double operator()(
-            std::size_t i, std::size_t j, double value) final
+        KOKKOS_FUNCTION virtual double operator()(
+            std::size_t i, std::size_t j, double value) 
         {
             return std::max(0.0, value);
         }
 
-        PUPable_decl(relu_op);
+        
         relu_op(CkMigrateMessage* m)
           : ct::unary_operator(m)
         {
         }
-        void pup(PUP::er& p) final
+        void pup(PUP::er& p) 
         {
             ct::unary_operator::pup(p);
         }
     };
 
-    namespace unary_ops {
+    #ifdef KOKKOS_ENABLE_CUDA
+    template<typename T>
+    void* placement_new(void* deviceInstanceMemory){
+        Kokkos::parallel_for("initialize", 1, KOKKOS_LAMBDA (const int i) {
+            new (static_cast<T*>(deviceInstanceMemory)) T(); // initialize on device
+        });
+        return deviceInstanceMemory;
+    }
 
-        inline std::shared_ptr<ct::unary_operator> negate()
-        {
-            return std::make_shared<negate_op>();
+    void dealloc_placement_new(ct::unary_operator* ptr, void* deviceInstanceMemory){
+        Kokkos::parallel_for("destroy", 1, KOKKOS_LAMBDA (const int i) {
+            ptr->~unary_operator(); // destroy on device
+        });
+        Kokkos::kokkos_free(deviceInstanceMemory);
+    }
+    #endif
+
+    // template <typename T>
+    // class operation_wrapper{
+    //     public:
+    //     T* unop_ptr;
+    //     void* deviceInstanceMemory;
+
+    //     operation_wrapper(){
+    //         void* deviceInstanceMemory = Kokkos::kokkos_malloc(sizeof(T));
+    //         unop_ptr = static_cast<T*>(placement_new<T>(deviceInstanceMemory));
+    //     }
+
+    //     ~operation_wrapper(){
+    //         dealloc_placement_new<T> (deviceInstanceMemory, unop_ptr);
+    //     }
+    // };
+
+    class negate_op_wrapper: public unary_op_wrapper{
+        public:
+        PUPable_decl(negate_op_wrapper);
+        negate_op_wrapper(){
+            #ifdef KOKKOS_ENABLE_CUDA
+            this->create_gpu_unop();
+            #else
+            unop_ptr = new negate_op();
+            #endif
+        };
+        
+        #ifdef KOKKOS_ENABLE_CUDA
+        void create_gpu_unop(){
+            deviceInstanceMemory = Kokkos::kokkos_malloc(sizeof(negate_op));
+            void* negate_unop_ptr = placement_new<ct::negate_op>(deviceInstanceMemory);
+            unop_ptr = static_cast<ct::negate_op*>(negate_unop_ptr);
         }
+        #endif
+
+        ~negate_op_wrapper(){
+            #ifdef KOKKOS_ENABLE_CUDA
+            dealloc_placement_new(unop_ptr, deviceInstanceMemory);
+            Kokkos::fence();
+            #else
+            delete (negate_op*)unop_ptr;
+            #endif
+        }
+        void pup(PUP::er& p){
+            unary_op_wrapper::pup(p);
+            if(p.isUnpacking()){
+                #ifdef KOKKOS_ENABLE_CUDA
+                this->create_gpu_unop();
+                #else
+                unop_ptr = new negate_op();
+                #endif
+            }
+        }
+
+        negate_op_wrapper(CkMigrateMessage* m)
+          : unary_op_wrapper(m)
+        {
+        }
+    };
+
+    namespace unary_ops {
+        // template<typename op> 
+        // can we make this templatized?
+        inline std::shared_ptr<unary_op_wrapper> negate()
+        {
+            return std::make_shared<negate_op_wrapper>();
+        }
+        // inline ct::negate_op* negate()
+        // {
+        //     return new ct::negate_op();
+        // }
 
         inline std::shared_ptr<ct::unary_operator> abs()
         {

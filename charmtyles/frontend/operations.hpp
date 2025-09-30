@@ -921,7 +921,7 @@ namespace ct {
 
     template <typename Operand>
     auto unary_expr(
-        Operand const& operand, std::shared_ptr<unary_operator> unary_op)
+        Operand const& operand, std::shared_ptr<ct::unary_op_wrapper> unary_op)
     {
         if constexpr (traits::is_vec_type_impl<
                           typename std::decay<Operand>::type>::value)

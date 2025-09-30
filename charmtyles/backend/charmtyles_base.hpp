@@ -6,6 +6,7 @@
 #include <charmtyles/util/generator.hpp>
 #include <charmtyles/util/matrix_view.hpp>
 #include <charmtyles/util/sizes.hpp>
+#include <cuda_runtime.h>
 
 class CProxy_vector_impl;
 class CProxy_matrix_impl;
@@ -14,6 +15,7 @@ class CProxy_get_partial_vec_future;
 
 #include <charmtyles/backend/libcharmtyles.decl.h>
 
+CProxy_KokkosGroup kokkosMgmt;
 /* readonly */ CProxy_scalar_impl scalar_impl_proxy;
 
 class set_future : public CBase_set_future
@@ -262,12 +264,6 @@ public:
         std::size_t remainder_start{0};
         std::size_t copy_id{0};
 
-        std::shared_ptr<ct::unary_operator> const& unary_expr =
-            node.unary_expr_;
-
-        std::shared_ptr<ct::binary_operator> const& binary_expr =
-            node.binary_expr_;
-
         std::random_device rd;
         std::mt19937 gen(rd());
         std::uniform_real_distribution<> dist(0., 1.);
@@ -345,9 +341,10 @@ public:
 
             Kokkos::View<double*> res_view = vec_map[node_id];
 
-            Kokkos::parallel_for("binop_" + std::to_string(node_id), vec_map[node_id].size(), KOKKOS_LAMBDA(int i) {
-                res_view(i) = execute_ast_for_idx(instruction, 0, i);
-            });
+            vec_map[node_id] = execute_ast(instruction, 0, res_view.extent(0));
+            // Kokkos::parallel_for("binop_" + std::to_string(node_id), vec_map[node_id].size(), KOKKOS_LAMBDA(int i) {
+            //     res_view(i) = execute_ast_for_idx(instruction, 0, i);
+            // });
         }
 
             return;
@@ -360,8 +357,8 @@ public:
                 vec_map.emplace_back(vec);
             }
             Kokkos::parallel_for("inplace_add_" + std::to_string(node_id), vec_map[node_id].size(), KOKKOS_LAMBDA(int i) {
-                if (copy_id == static_cast<std::size_t>(-1)) vec_map[node_id](i) += execute_ast_for_idx(instruction, 0, i);
-                else vec_map[node_id](i) += vec_map[copy_id](i);
+                // if (copy_id == static_cast<std::size_t>(-1)) vec_map[node_id](i) += execute_ast_for_idx(instruction, 0, i);
+                // else vec_map[node_id](i) += vec_map[copy_id](i);
             });
         } return;
         case ct::util::Operation::inplace_sub: {
@@ -373,8 +370,8 @@ public:
                 vec_map.emplace_back(vec);
             }
             Kokkos::parallel_for("inplace_sub_" + std::to_string(node_id), vec_map[node_id].size(), KOKKOS_LAMBDA(int i) {
-                if (copy_id == static_cast<std::size_t>(-1)) vec_map[node_id](i) -= execute_ast_for_idx(instruction, 0, i);
-                else vec_map[node_id](i) -= vec_map[copy_id](i);
+                // if (copy_id == static_cast<std::size_t>(-1)) vec_map[node_id](i) -= execute_ast_for_idx(instruction, 0, i);
+                // else vec_map[node_id](i) -= vec_map[copy_id](i);
             });
         } return;
         case ct::util::Operation::inplace_divide: {
@@ -386,8 +383,8 @@ public:
                 vec_map.emplace_back(vec);
             }
             Kokkos::parallel_for("inplace_divide_" + std::to_string(node_id), vec_map[node_id].size(), KOKKOS_LAMBDA(int i) {
-                if (copy_id == static_cast<std::size_t>(-1)) vec_map[node_id](i) /= execute_ast_for_idx(instruction, 0, i);
-                else vec_map[node_id](i) /= vec_map[copy_id](i);
+                // if (copy_id == static_cast<std::size_t>(-1)) vec_map[node_id](i) /= execute_ast_for_idx(instruction, 0, i);
+                // else vec_map[node_id](i) /= vec_map[copy_id](i);
             });
         } return;
         case ct::util::Operation::axpy:
@@ -438,78 +435,203 @@ public:
         }
     }
 
-    double execute_ast_for_idx(
+    Kokkos::View<double*> execute_ast(
         std::vector<ct::vec_impl::vec_node> const& instruction,
-        std::size_t curr_idx, std::size_t iter_idx)
+        std::size_t curr_idx, size_t vec_size)
     {
         const ct::vec_impl::vec_node& node = instruction[curr_idx];
 
         switch (node.operation_)
         {
         case ct::util::Operation::noop:
-            return vec_map[node.name_](iter_idx);
-        case ct::util::Operation::add:
-            return execute_ast_for_idx(instruction, node.left_, iter_idx) +
-                execute_ast_for_idx(instruction, node.right_, iter_idx);
+            return vec_map[node.name_];
+        case ct::util::Operation::add:{
+            Kokkos::View<double*> left_view = execute_ast(instruction, node.left_, vec_size);
+            Kokkos::View<double*> right_view = execute_ast(instruction, node.right_, vec_size);
+            Kokkos::View<double*> res_view("res_view", vec_size);
+            
+            Kokkos::parallel_for(std::to_string(node.left_)+" + "+ std::to_string(node.right_), vec_size, KOKKOS_LAMBDA(int i) {
+                res_view(i) = left_view(i)+right_view(i);
+            });
+            return res_view;
+        };
         case ct::util::Operation::sub:
-            return execute_ast_for_idx(instruction, node.left_, iter_idx) -
-                execute_ast_for_idx(instruction, node.right_, iter_idx);
+        {
+            Kokkos::View<double*> left_view = execute_ast(instruction, node.left_, vec_size);
+            Kokkos::View<double*> right_view = execute_ast(instruction, node.right_, vec_size);
+            Kokkos::View<double*> res_view("res_view", vec_size);
+            
+            Kokkos::parallel_for(std::to_string(node.left_)+" - "+ std::to_string(node.right_), vec_size, KOKKOS_LAMBDA(int i) {
+                res_view(i) = left_view(i)-right_view(i);
+            });
+            return res_view;
+        };
         case ct::util::Operation::divide:
-            return execute_ast_for_idx(instruction, node.left_, iter_idx) /
-                execute_ast_for_idx(instruction, node.right_, iter_idx);
+        {
+            Kokkos::View<double*> left_view = execute_ast(instruction, node.left_, vec_size);
+            Kokkos::View<double*> right_view = execute_ast(instruction, node.right_, vec_size);
+            Kokkos::View<double*> res_view("res_view", vec_size);
+            
+            Kokkos::parallel_for(std::to_string(node.left_)+" / "+ std::to_string(node.right_), vec_size, KOKKOS_LAMBDA(int i) {
+                res_view(i) = left_view(i)/right_view(i);
+            });
+            return res_view;
+        };
         case ct::util::Operation::multiply:
-            return execute_ast_for_idx(instruction, node.left_, iter_idx) *
-                execute_ast_for_idx(instruction, node.right_, iter_idx);
+        {
+            Kokkos::View<double*> left_view = execute_ast(instruction, node.left_, vec_size);
+            Kokkos::View<double*> right_view = execute_ast(instruction, node.right_, vec_size);
+            Kokkos::View<double*> res_view("res_view", vec_size);
+            
+            Kokkos::parallel_for(std::to_string(node.left_)+" * "+ std::to_string(node.right_), vec_size, KOKKOS_LAMBDA(int i) {
+                res_view(i) = left_view(i)*right_view(i);
+            });
+            return res_view;
+        };
         case ct::util::Operation::eq:
-            return execute_ast_for_idx(instruction, node.left_, iter_idx) ==
-                execute_ast_for_idx(instruction, node.right_, iter_idx);
+        {
+            Kokkos::View<double*> left_view = execute_ast(instruction, node.left_, vec_size);
+            Kokkos::View<double*> right_view = execute_ast(instruction, node.right_, vec_size);
+            Kokkos::View<double*> res_view("res_view", vec_size);
+            
+            Kokkos::parallel_for(std::to_string(node.left_)+" == "+ std::to_string(node.right_), vec_size, KOKKOS_LAMBDA(int i) {
+                res_view(i) = left_view(i)==right_view(i);
+            });
+            return res_view;
+        };
+
         case ct::util::Operation::neq:
-            return execute_ast_for_idx(instruction, node.left_, iter_idx) !=
-                execute_ast_for_idx(instruction, node.right_, iter_idx);
+        {
+            Kokkos::View<double*> left_view = execute_ast(instruction, node.left_, vec_size);
+            Kokkos::View<double*> right_view = execute_ast(instruction, node.right_, vec_size);
+            Kokkos::View<double*> res_view("res_view", vec_size);
+            
+            Kokkos::parallel_for(std::to_string(node.left_)+" != "+ std::to_string(node.right_), vec_size, KOKKOS_LAMBDA(int i) {
+                res_view(i) = left_view(i)!=right_view(i);
+            });
+            return res_view;
+        };
         case ct::util::Operation::geq:
-            return execute_ast_for_idx(instruction, node.left_, iter_idx) >=
-                execute_ast_for_idx(instruction, node.right_, iter_idx);
+        {
+            Kokkos::View<double*> left_view = execute_ast(instruction, node.left_, vec_size);
+            Kokkos::View<double*> right_view = execute_ast(instruction, node.right_, vec_size);
+            Kokkos::View<double*> res_view("res_view", vec_size);
+            
+            Kokkos::parallel_for(std::to_string(node.left_)+" >= "+ std::to_string(node.right_), vec_size, KOKKOS_LAMBDA(int i) {
+                res_view(i) = left_view(i)>=right_view(i);
+            });
+            return res_view;
+        };
         case ct::util::Operation::leq:
-            return execute_ast_for_idx(instruction, node.left_, iter_idx) <=
-                execute_ast_for_idx(instruction, node.right_, iter_idx);
+        {
+            Kokkos::View<double*> left_view = execute_ast(instruction, node.left_, vec_size);
+            Kokkos::View<double*> right_view = execute_ast(instruction, node.right_, vec_size);
+            Kokkos::View<double*> res_view("res_view", vec_size);
+            
+            Kokkos::parallel_for(std::to_string(node.left_)+" <= "+ std::to_string(node.right_), vec_size, KOKKOS_LAMBDA(int i) {
+                res_view(i) = left_view(i)<=right_view(i);
+            });
+            return res_view;
+        };
         case ct::util::Operation::greater:
-            return execute_ast_for_idx(instruction, node.left_, iter_idx) >
-                execute_ast_for_idx(instruction, node.right_, iter_idx);
+        {
+            Kokkos::View<double*> left_view = execute_ast(instruction, node.left_, vec_size);
+            Kokkos::View<double*> right_view = execute_ast(instruction, node.right_, vec_size);
+            Kokkos::View<double*> res_view("res_view", vec_size);
+            
+            Kokkos::parallel_for(std::to_string(node.left_)+" > "+ std::to_string(node.right_), vec_size, KOKKOS_LAMBDA(int i) {
+                res_view(i) = left_view(i)>right_view(i);
+            });
+            return res_view;
+        };
         case ct::util::Operation::lesser:
-            return execute_ast_for_idx(instruction, node.left_, iter_idx) <
-                execute_ast_for_idx(instruction, node.right_, iter_idx);
+        {
+            Kokkos::View<double*> left_view = execute_ast(instruction, node.left_, vec_size);
+            Kokkos::View<double*> right_view = execute_ast(instruction, node.right_, vec_size);
+            Kokkos::View<double*> res_view("res_view", vec_size);
+            
+            Kokkos::parallel_for(std::to_string(node.left_)+" < "+ std::to_string(node.right_), vec_size, KOKKOS_LAMBDA(int i) {
+                res_view(i) = left_view(i)<right_view(i);
+            });
+            return res_view;
+        };
         case ct::util::Operation::logical_and:
-            return execute_ast_for_idx(instruction, node.left_, iter_idx) &&
-                execute_ast_for_idx(instruction, node.right_, iter_idx);
+        {
+            Kokkos::View<double*> left_view = execute_ast(instruction, node.left_, vec_size);
+            Kokkos::View<double*> right_view = execute_ast(instruction, node.right_, vec_size);
+            Kokkos::View<double*> res_view("res_view", vec_size);
+            
+            Kokkos::parallel_for(std::to_string(node.left_)+" && "+ std::to_string(node.right_), vec_size, KOKKOS_LAMBDA(int i) {
+                res_view(i) = left_view(i)&&right_view(i);
+            });
+            return res_view;
+        };
         case ct::util::Operation::logical_or:
-            return execute_ast_for_idx(instruction, node.left_, iter_idx) ||
-                execute_ast_for_idx(instruction, node.right_, iter_idx);
+            {
+            Kokkos::View<double*> left_view = execute_ast(instruction, node.left_, vec_size);
+            Kokkos::View<double*> right_view = execute_ast(instruction, node.right_, vec_size);
+            Kokkos::View<double*> res_view("res_view", vec_size);
+            
+            Kokkos::parallel_for(std::to_string(node.left_)+" || "+ std::to_string(node.right_), vec_size, KOKKOS_LAMBDA(int i) {
+                res_view(i) = left_view(i)||right_view(i);
+            });
+            return res_view;
+        };
         case ct::util::Operation::logical_not:
-            return !execute_ast_for_idx(instruction, node.left_, iter_idx);
+        {
+            Kokkos::View<double*> left_view = execute_ast(instruction, node.left_, vec_size);
+            Kokkos::View<double*> res_view("res_view", vec_size);
+            
+            Kokkos::parallel_for(" ! " + std::to_string(node.left_), vec_size, KOKKOS_LAMBDA(int i) {
+                res_view(i) = !left_view(i);
+            });
+            return res_view;
+        };
         case ct::util::Operation::unary_expr:
-            return node.unary_expr_->operator()(iter_idx,
-                execute_ast_for_idx(instruction, node.left_, iter_idx));
+        {
+            Kokkos::View<double*> left_view = execute_ast(instruction, node.left_, vec_size);
+            Kokkos::View<double*> res_view("res_view", vec_size);
+            ct::unary_operator* unary_op = node.unary_expr_->unop_ptr;
+            Kokkos::parallel_for("unop" + std::to_string(node.left_), vec_size, KOKKOS_LAMBDA(int i) {
+                res_view(i) = unary_op->operator()(i, left_view(i));
+            });
+            return res_view;
+        };
         case ct::util::Operation::binary_expr:
-            return node.binary_expr_->operator()(iter_idx,
-                execute_ast_for_idx(instruction, node.left_, iter_idx),
-                execute_ast_for_idx(instruction, node.right_, iter_idx));
+        {
+            Kokkos::View<double*> left_view = execute_ast(instruction, node.left_, vec_size);
+            Kokkos::View<double*> right_view = execute_ast(instruction, node.right_, vec_size);
+            Kokkos::View<double*> res_view("res_view", vec_size);
+            
+            Kokkos::parallel_for(std::to_string(node.left_)+" binop "+ std::to_string(node.right_), vec_size, KOKKOS_LAMBDA(int i) {
+                res_view(i) = node.binary_expr_->operator()(i, left_view(i), right_view(i));
+            });
+            return res_view;
+        };
         case ct::util::Operation::broadcast:
-            return node.value_;
+        {
+            Kokkos::View<double*> res_view("res_view", vec_size);
+            Kokkos::deep_copy(res_view, node.value_);
+            return res_view;
+        }
         case ct::util::Operation::where:
-            if (execute_ast_for_idx(instruction, node.ter_, iter_idx))
-            {
-                return execute_ast_for_idx(instruction, node.left_, iter_idx);
-            }
-            else
-            {
-                return execute_ast_for_idx(instruction, node.right_, iter_idx);
-            }
+        {
+            Kokkos::View<double*> left_view = execute_ast(instruction, node.left_, vec_size);
+            Kokkos::View<double*> right_view = execute_ast(instruction, node.right_, vec_size);
+            Kokkos::View<double*> ter_view = execute_ast(instruction, node.ter_, vec_size);
+            Kokkos::View<double*> res_view("res_view", vec_size);
+            
+            Kokkos::parallel_for(std::to_string(node.left_)+" binop "+ std::to_string(node.right_), vec_size, KOKKOS_LAMBDA(int i) {
+                res_view(i) = ter_view(i)?left_view(i):right_view(i);
+            });
+            return res_view;
+        };
         default:
             CmiAbort("Operation not implemented");
         }
 
         // Control should not reach here!
-        return 0.;
+        CmiAbort("Unreachable code reached");
     }
 
 public:
@@ -1041,22 +1163,36 @@ private:
 };
 
 class KokkosGroup : public CBase_KokkosGroup {
-private:
-    int device;
-    // cudaStream_t stream;
 public:
+    int device;
+    #ifdef KOKKOS_ENABLE_CUDA
+    // cudaStream_t stream;
+    // Kokkos::Cuda exec_space;
+    #endif
+
   KokkosGroup() {
-    Kokkos::initialize();
-    // int n_devices;
-    // cudaGetDeviceCount(&n_devices);
-    // device = CkMyPe() % n_devices;
-    // cudaSetDevice(device);
-    // cudaStreamCreate(&stream);
+
+    Kokkos::initialize(Kokkos::InitializationSettings().set_device_id(0));
+    {
+        #ifdef KOKKOS_ENABLE_CUDA
+        // int n_devices;
+        // cudaGetDeviceCount(&n_devices);
+        // // device = CkMyPe() % n_devices;
+        // ckout<<n_devices<<endl;
+        // device = 0;
+        // cudaSetDevice(device);
+        // cudaStreamCreate(&stream);
+        // Kokkos::Cuda exec_space(stream);
+        // this->exec_space = exec_space;
+        #endif
+    }
   }
 
   void finalize() {
     Kokkos::finalize();
+    #ifdef KOKKOS_ENABLE_CUDA
     // cudaSetDevice(device);
-    // cudaStreamDestroy(&stream);
+    // cudaStreamDestroy(stream);
+    #endif
   }
 };

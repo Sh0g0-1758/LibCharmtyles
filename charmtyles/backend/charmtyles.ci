@@ -1,10 +1,12 @@
 module libcharmtyles
-{
+{   
     include "charmtyles/util/AST.hpp";
     include "charmtyles/util/generator.hpp";
     include "Eigen/Core";
     include "limits";
 
+    readonly CProxy_KokkosGroup kokkosMgmt;
+    
     readonly CProxy_scalar_impl scalar_impl_proxy;
 
     chare set_future
@@ -40,7 +42,6 @@ module libcharmtyles
     PUPable ct::generator;
     PUPable ct::from_vector_generator;
     PUPable ct::from_matrix_generator;
-    PUPable ct::unary_operator;
     PUPable ct::binary_operator;
     PUPable ct::custom_operator;
 
