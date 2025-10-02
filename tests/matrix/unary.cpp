@@ -5,7 +5,7 @@
 class identity_t : public ct::unary_operator
 {
 public:
-    identity_t() = default;
+    identity_t() {};
     ~identity_t() {}
 
     using ct::unary_operator::unary_operator;
@@ -28,17 +28,13 @@ public:
         }
     }
 
-    PUPable_decl(identity_t);
-    identity_t(CkMigrateMessage* m)
-      : ct::unary_operator(m)
-    {
-    }
-
-    void pup(PUP::er& p) final
-    {
-        ct::unary_operator::pup(p);
-    }
 };
+
+class identity_t_wrapper : public ct::unary_op_wrapper{
+    public:
+    
+}
+
 
 class Main : public CBase_Main
 {

@@ -373,74 +373,47 @@ namespace ct {
         }
     };
 
-    #ifdef KOKKOS_ENABLE_CUDA
     template<typename T>
-    void* placement_new(void* deviceInstanceMemory){
+    T* construct_unop_ptr() {
+        #ifdef KOKKOS_ENABLE_CUDA
+        void* deviceInstanceMemory = Kokkos::kokkos_malloc(sizeof(T));
         Kokkos::parallel_for("initialize", 1, KOKKOS_LAMBDA (const int i) {
             new (static_cast<T*>(deviceInstanceMemory)) T(); // initialize on device
         });
-        return deviceInstanceMemory;
+        return static_cast<T*>(deviceInstanceMemory);
+        #else
+        return new T();
+        #endif
+        
     }
-
-    void dealloc_placement_new(ct::unary_operator* ptr, void* deviceInstanceMemory){
+    
+    void deallocate_unop_ptr(ct::unary_operator* ptr){
+        #ifdef KOKKOS_ENABLE_CUDA
         Kokkos::parallel_for("destroy", 1, KOKKOS_LAMBDA (const int i) {
             ptr->~unary_operator(); // destroy on device
         });
-        Kokkos::kokkos_free(deviceInstanceMemory);
+        Kokkos::kokkos_free(ptr);
+        #else
+        delete (negate_op*)unop_ptr;
+        #endif
+        ckout<<"destroyed successfully"<<endl;
     }
-    #endif
 
-    // template <typename T>
-    // class operation_wrapper{
-    //     public:
-    //     T* unop_ptr;
-    //     void* deviceInstanceMemory;
-
-    //     operation_wrapper(){
-    //         void* deviceInstanceMemory = Kokkos::kokkos_malloc(sizeof(T));
-    //         unop_ptr = static_cast<T*>(placement_new<T>(deviceInstanceMemory));
-    //     }
-
-    //     ~operation_wrapper(){
-    //         dealloc_placement_new<T> (deviceInstanceMemory, unop_ptr);
-    //     }
-    // };
 
     class negate_op_wrapper: public unary_op_wrapper{
         public:
         PUPable_decl(negate_op_wrapper);
         negate_op_wrapper(){
-            #ifdef KOKKOS_ENABLE_CUDA
-            this->create_gpu_unop();
-            #else
-            unop_ptr = new negate_op();
-            #endif
+            unop_ptr = construct_unop_ptr<ct::negate_op>();
         };
         
-        #ifdef KOKKOS_ENABLE_CUDA
-        void create_gpu_unop(){
-            deviceInstanceMemory = Kokkos::kokkos_malloc(sizeof(negate_op));
-            void* negate_unop_ptr = placement_new<ct::negate_op>(deviceInstanceMemory);
-            unop_ptr = static_cast<ct::negate_op*>(negate_unop_ptr);
-        }
-        #endif
-
         ~negate_op_wrapper(){
-            #ifdef KOKKOS_ENABLE_CUDA
-            dealloc_placement_new(unop_ptr, deviceInstanceMemory);
-            Kokkos::fence();
-            #else
-            delete (negate_op*)unop_ptr;
-            #endif
+            deallocate_unop_ptr(unop_ptr);
         }
         void pup(PUP::er& p){
             unary_op_wrapper::pup(p);
             if(p.isUnpacking()){
-                #ifdef KOKKOS_ENABLE_CUDA
-                this->create_gpu_unop();
-                #else
-                unop_ptr = new negate_op();
-                #endif
+                unop_ptr = construct_unop_ptr<ct::negate_op>();
             }
         }
 

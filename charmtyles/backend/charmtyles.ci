@@ -42,6 +42,7 @@ module libcharmtyles
     PUPable ct::generator;
     PUPable ct::from_vector_generator;
     PUPable ct::from_matrix_generator;
+    PUPable ct::unary_op_wrapper;
     PUPable ct::binary_operator;
     PUPable ct::custom_operator;
 
